@@ -1,0 +1,18 @@
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context=vm.createContext({render(){},document:{createElement(){return {}},head:{appendChild(){}}}});
+const source=readFileSync(new URL('../public/catalog.js',import.meta.url),'utf8').replace(/render\(\);\s*$/,'');
+vm.runInContext(source,context);
+vm.runInContext(`catalog={players:[{id:'old',ign:'Former',active:1,role_id:'MID'},{id:'fa',ign:'FreeAgent',first_name:'Bence',active:1,role_id:'TOP'},{id:'taken',ign:'Taken',active:1,role_id:'TOP'},{id:'archived',ign:'Archived',active:0,role_id:'MID'}],roster_memberships:[{player_id:'old',ended_at:'2026-11-02'},{player_id:'taken',ended_at:null}]}`,context);
+const ids=(query='',role='')=>Array.from(vm.runInContext(`catAvailableMembers(${JSON.stringify(query)},${JSON.stringify(role)}).map(p=>p.id)`,context));
+assert.deepEqual(ids(),['old','fa']);
+assert.deepEqual(ids(' freeAGENT '),['fa']);
+assert.deepEqual(ids('bence'),['fa']);
+assert.deepEqual(ids('','MID'),['old']);
+assert.deepEqual(ids('Former','TOP'),[]);
+vm.runInContext(`catalog.roster_memberships.push({player_id:'fa',ended_at:null})`,context);
+assert.deepEqual(ids(),['old']);
+vm.runInContext(`catalog.roster_memberships[2].ended_at='2026-11-02'`,context);
+assert.deepEqual(ids('free'),['fa']);
+console.log('PASS: roster search, case-insensitive IGN and real name, role filter, active membership exclusions, archive exclusions and reopened availability.');

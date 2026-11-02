@@ -1,0 +1,436 @@
+{
+  "schema_version": 1,
+  "regions": [],
+  "leagues": [
+    {
+      "id": "lck",
+      "short_name": "LCK",
+      "name": "LCK",
+      "region_id": "KR",
+      "logo_url": "/assets/lck.png"
+    },
+    {
+      "id": "lec",
+      "short_name": "LEC",
+      "name": "LEC",
+      "region_id": "EMEA",
+      "logo_url": "/assets/lec.png"
+    },
+    {
+      "id": "lpl",
+      "short_name": "LPL",
+      "name": "LPL",
+      "region_id": "CN",
+      "logo_url": "/assets/lpl.png"
+    },
+    {
+      "id": "msi",
+      "short_name": "MSI",
+      "name": "Mid-Season Invitational",
+      "region_id": null,
+      "logo_url": "/assets/msi.png"
+    },
+    {
+      "id": "ewc",
+      "short_name": "EWC",
+      "name": "Esports World Cup",
+      "region_id": null,
+      "logo_url": "/assets/ewc.png"
+    },
+    {
+      "id": "worlds",
+      "short_name": "WORLDS",
+      "name": "Worlds",
+      "region_id": null,
+      "logo_url": "/assets/worlds.png"
+    },
+    {
+      "id": "demacia-cup",
+      "short_name": "DC",
+      "name": "Demacia Cup",
+      "region_id": "CN",
+      "logo_url": "/assets/dc.png"
+    }
+  ],
+  "teams": [
+    {
+      "id": "minta-team-a",
+      "name": "MINTA Team A",
+      "short_name": "MINTAA",
+      "aliases": [
+        "EXAMPLEA"
+      ],
+      "region_id": "KR",
+      "league_id": "lck",
+      "logo_url": null
+    },
+    {
+      "id": "minta-team-b",
+      "name": "MINTA Team B",
+      "short_name": "MINTAB",
+      "aliases": [
+        "EXAMPLEB"
+      ],
+      "region_id": "KR",
+      "league_id": "lck",
+      "logo_url": null
+    }
+  ],
+  "players": [
+    {
+      "id": "minta-a-top",
+      "ign": "MintaA_TOP",
+      "role_id": "TOP",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-a-jungle",
+      "ign": "MintaA_JUNGLE",
+      "role_id": "JUNGLE",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-a-mid",
+      "ign": "MintaA_MID",
+      "role_id": "MID",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-a-adc",
+      "ign": "MintaA_ADC",
+      "role_id": "ADC",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-a-support",
+      "ign": "MintaA_SUPPORT",
+      "role_id": "SUPPORT",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-b-top",
+      "ign": "MintaB_TOP",
+      "role_id": "TOP",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-b-jungle",
+      "ign": "MintaB_JUNGLE",
+      "role_id": "JUNGLE",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-b-mid",
+      "ign": "MintaB_MID",
+      "role_id": "MID",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-b-adc",
+      "ign": "MintaB_ADC",
+      "role_id": "ADC",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    },
+    {
+      "id": "minta-b-support",
+      "ign": "MintaB_SUPPORT",
+      "role_id": "SUPPORT",
+      "country_ids": [
+        "KR"
+      ],
+      "photo_url": null
+    }
+  ],
+  "rosters": [
+    {
+      "id": "roster-minta-a-top",
+      "team_id": "minta-team-a",
+      "player_id": "minta-a-top",
+      "role_id": "TOP",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-a-jungle",
+      "team_id": "minta-team-a",
+      "player_id": "minta-a-jungle",
+      "role_id": "JUNGLE",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-a-mid",
+      "team_id": "minta-team-a",
+      "player_id": "minta-a-mid",
+      "role_id": "MID",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-a-adc",
+      "team_id": "minta-team-a",
+      "player_id": "minta-a-adc",
+      "role_id": "ADC",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-a-support",
+      "team_id": "minta-team-a",
+      "player_id": "minta-a-support",
+      "role_id": "SUPPORT",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-b-top",
+      "team_id": "minta-team-b",
+      "player_id": "minta-b-top",
+      "role_id": "TOP",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-b-jungle",
+      "team_id": "minta-team-b",
+      "player_id": "minta-b-jungle",
+      "role_id": "JUNGLE",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-b-mid",
+      "team_id": "minta-team-b",
+      "player_id": "minta-b-mid",
+      "role_id": "MID",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-b-adc",
+      "team_id": "minta-team-b",
+      "player_id": "minta-b-adc",
+      "role_id": "ADC",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    },
+    {
+      "id": "roster-minta-b-support",
+      "team_id": "minta-team-b",
+      "player_id": "minta-b-support",
+      "role_id": "SUPPORT",
+      "is_starter": true,
+      "started_at": "2026-01-01",
+      "ended_at": null
+    }
+  ],
+  "seasons": [
+    {
+      "id": "lck-2026",
+      "league_id": "lck",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "lec-2026",
+      "league_id": "lec",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "lpl-2026",
+      "league_id": "lpl",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "msi-2026",
+      "league_id": "msi",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "ewc-2026",
+      "league_id": "ewc",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "worlds-2026",
+      "league_id": "worlds",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "demacia-cup-2026",
+      "league_id": "demacia-cup",
+      "year": 2026,
+      "name": "2026"
+    }
+  ],
+  "phases": [
+    {
+      "id": "minta-alapszakasz",
+      "season_id": "lck-2026",
+      "name": "MINTA Alapszakasz",
+      "type": "standings",
+      "sort_order": 1,
+      "win_points": 1,
+      "loss_points": 0,
+      "groups": [],
+      "participants": [
+        {
+          "team_id": "minta-team-a",
+          "group_id": null
+        },
+        {
+          "team_id": "minta-team-b",
+          "group_id": null
+        }
+      ]
+    },
+    {
+      "id": "minta-csoportkor",
+      "season_id": "lck-2026",
+      "name": "MINTA Csoportkör",
+      "type": "groups",
+      "sort_order": 2,
+      "win_points": 1,
+      "loss_points": 0,
+      "groups": [
+        {
+          "id": "minta-csoport-a",
+          "name": "A csoport"
+        }
+      ],
+      "participants": [
+        {
+          "team_id": "minta-team-a",
+          "group_id": "minta-csoport-a"
+        },
+        {
+          "team_id": "minta-team-b",
+          "group_id": "minta-csoport-a"
+        }
+      ]
+    },
+    {
+      "id": "minta-playoffs",
+      "season_id": "lck-2026",
+      "name": "MINTA Rájátszás",
+      "type": "playoffs",
+      "sort_order": 3,
+      "win_points": 1,
+      "loss_points": 0,
+      "groups": [],
+      "participants": [
+        {
+          "team_id": "minta-team-a",
+          "group_id": null
+        },
+        {
+          "team_id": "minta-team-b",
+          "group_id": null
+        }
+      ]
+    }
+  ],
+  "matches": [
+    {
+      "id": "minta-match-1",
+      "phase_id": "minta-alapszakasz",
+      "group_id": null,
+      "team_a_id": "minta-team-a",
+      "team_b_id": "minta-team-b",
+      "best_of": 3,
+      "start_at": "2026-11-10T17:00:00Z",
+      "round_name": "1. forduló",
+      "round_order": 1,
+      "bracket_side": "main",
+      "status": "scheduled",
+      "result": null
+    },
+    {
+      "id": "minta-match-2",
+      "phase_id": "minta-csoportkor",
+      "group_id": "minta-csoport-a",
+      "team_a_id": "minta-team-a",
+      "team_b_id": "minta-team-b",
+      "best_of": 3,
+      "start_at": "2026-11-11T17:00:00Z",
+      "round_name": "1. forduló",
+      "round_order": 1,
+      "bracket_side": "main",
+      "status": "scheduled",
+      "result": null
+    },
+    {
+      "id": "minta-match-3",
+      "phase_id": "minta-playoffs",
+      "group_id": null,
+      "team_a_id": "minta-team-a",
+      "team_b_id": "minta-team-b",
+      "best_of": 5,
+      "start_at": "2026-11-12T17:00:00Z",
+      "round_name": "Grand Final",
+      "round_order": 1,
+      "bracket_side": "final",
+      "status": "scheduled",
+      "result": null
+    },
+    {
+      "id": "minta-finished",
+      "phase_id": "minta-alapszakasz",
+      "group_id": null,
+      "team_a_id": "minta-team-a",
+      "team_b_id": "minta-team-b",
+      "best_of": 3,
+      "start_at": "2026-10-31T17:00:00Z",
+      "round_name": "Korábbi forduló",
+      "round_order": 0,
+      "bracket_side": "main",
+      "status": "completed",
+      "result": {
+        "score_a": 2,
+        "score_b": 1,
+        "mvp_player_id": "minta-a-mid"
+      }
+    }
+  ]
+}
