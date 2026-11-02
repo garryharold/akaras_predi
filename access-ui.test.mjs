@@ -1,0 +1,10 @@
+import vm from 'node:vm';import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';
+const elements=new Map();for(const key of ['#nav','#account','#app','footer span','#toast'])elements.set(key,{innerHTML:'',textContent:'',querySelectorAll(){return []},classList:{add(){},remove(){}}});
+const document={querySelector(key){return elements.get(key)||null},createElement(){return {}},head:{appendChild(){}}};
+const context=vm.createContext({document,location:{hash:'#events'},window:{},setTimeout(){},clearTimeout(){},console,Date,Map,Set,Intl});
+let source=readFileSync(new URL('../public/hub.js',import.meta.url),'utf8');source=source.slice(0,source.indexOf("window.addEventListener('hashchange'"));vm.runInContext(source,context);
+vm.runInContext(readFileSync(new URL('../public/catalog.js',import.meta.url),'utf8').replace(/render\(\);\s*$/,''),context);
+const fixture={leagues:[],seasons:[],phases:[],phase_teams:[],matches:[],players:[],teams:[],predictions:[],leaderboard:[]};
+for(const viewer of [null,{id:'regular',name:'Player',admin:false}]){context.fixture={...fixture,viewer};vm.runInContext('Hub=fixture;location.hash="#events";render()',context);assert(!elements.get('#nav').innerHTML.includes('#admin'));assert(!elements.get('#nav').innerHTML.includes('#database'));vm.runInContext('location.hash="#database";render()',context);assert(elements.get('#app').innerHTML.includes('csak adminfiókkal'));assert(!elements.get('#app').innerHTML.includes('Új játékos'));vm.runInContext('location.hash="#admin";render()',context);assert(elements.get('#app').innerHTML.includes('adminjog'));}
+context.fixture={...fixture,viewer:{id:'admin',name:'Admin',admin:true}};vm.runInContext('Hub=fixture;location.hash="#events";render()',context);assert(elements.get('#nav').innerHTML.includes('#admin'));assert(elements.get('#nav').innerHTML.includes('#database'));
+console.log('PASS: regular and anonymous navigation hide admin/catalog, direct routes deny editing, administrator navigation remains available.');

@@ -1,0 +1,20 @@
+{
+  "name": "akaras-predictions-render",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server/start.mjs",
+    "test": "node tests/cloudflare-hosting.test.mjs && node tests/access-ui.test.mjs && node tests/roster-picker.test.mjs && node tests/postgres.test.mjs && node tests/render-server.test.mjs && node tests/postgres-account.test.mjs && node tests/postgres-game.test.mjs"
+  },
+  "dependencies": {
+    "pg": "8.16.3",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "worlds": {
+    "source_url": "https://static.lolesports.com/leagues/1592594612171_WorldsDarkBG.png",
+    "original_dimensions": [
+      600,
+      600
+    ],
+    "visible_bounds": [
+      78,
+      84,
+      522,
+      538
+    ],
+    "note": "Original PNG embedded without resampling; transparent padding excluded with SVG viewBox. Demacia mark uses the existing homepage blue."
+  },
+  "msi": {
+    "source_url": "https://static.lolesports.com/leagues/1592594634248_MSIDarkBG.png",
+    "original_dimensions": [
+      600,
+      600
+    ],
+    "visible_bounds": [
+      45,
+      45,
+      555,
+      555
+    ],
+    "note": "Original PNG embedded without resampling; transparent padding excluded with SVG viewBox. Demacia mark uses the existing homepage blue."
+  },
+  "lec": {
+    "source_url": "https://static.lolesports.com/leagues/1592516184297_LEC-01-FullonDark.png",
+    "original_dimensions": [
+      400,
+      400
+    ],
+    "visible_bounds": [
+      100,
+      32,
+      300,
+      348
+    ],
+    "note": "Original PNG embedded without resampling; transparent padding excluded with SVG viewBox. Demacia mark uses the existing homepage blue."
+  },
+  "dc": {
+    "source_url": "https://static.lolesports.com/leagues/1788253732774_94x-81.png",
+    "original_dimensions": [
+      1000,
+      1000
+    ],
+    "visible_bounds": [
+      50,
+      5,
+      947,
+      993
+    ],
+    "note": "Original PNG embedded without resampling; transparent padding excluded with SVG viewBox. Demacia mark uses the existing homepage blue."
+  },
+  "lck": {
+    "source_url": "https://static.lolesports.com/leagues/lck-color-on-black.png",
+    "original_dimensions": [
+      1000,
+      1000
+    ],
+    "visible_bounds": [
+      24,
+      171,
+      977,
+      589
+    ],
+    "note": "Original PNG embedded without resampling; SVG viewBox selects the bird emblem to retain the existing homepage mark."
+  },
+  "lpl": {
+    "source_url": "https://static.lolesports.com/leagues/1592516115322_LPL-01-FullonDark.png",
+    "original_dimensions": [
+      400,
+      400
+    ],
+    "visible_bounds": [
+      16,
+      88,
+      384,
+      300
+    ],
+    "note": "Original PNG embedded without resampling; transparent padding excluded with SVG viewBox. Demacia mark uses the existing homepage blue."
+  },
+  "ewc": {
+    "source_url": "https://static.lolesports.com/leagues/1782814488205_EWC26_PRIMARY_ABBREVIATED_LOGO_WHITE.png",
+    "original_dimensions": [
+      1000,
+      1000
+    ],
+    "visible_bounds": [
+      0,
+      402,
+      1000,
+      598
+    ],
+    "note": "Original PNG embedded without resampling; transparent padding excluded with SVG viewBox. Demacia mark uses the existing homepage blue."
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "regions": [],
+  "leagues": [
+    {
+      "id": "lck",
+      "short_name": "LCK",
+      "name": "LCK",
+      "region_id": "KR",
+      "logo_url": "/assets/lck.png"
+    },
+    {
+      "id": "lec",
+      "short_name": "LEC",
+      "name": "LEC",
+      "region_id": "EMEA",
+      "logo_url": "/assets/lec.png"
+    },
+    {
+      "id": "lpl",
+      "short_name": "LPL",
+      "name": "LPL",
+      "region_id": "CN",
+      "logo_url": "/assets/lpl.png"
+    },
+    {
+      "id": "msi",
+      "short_name": "MSI",
+      "name": "Mid-Season Invitational",
+      "region_id": null,
+      "logo_url": "/assets/msi.png"
+    },
+    {
+      "id": "ewc",
+      "short_name": "EWC",
+      "name": "Esports World Cup",
+      "region_id": null,
+      "logo_url": "/assets/ewc.png"
+    },
+    {
+      "id": "worlds",
+      "short_name": "WORLDS",
+      "name": "Worlds",
+      "region_id": null,
+      "logo_url": "/assets/worlds.png"
+    },
+    {
+      "id": "demacia-cup",
+      "short_name": "DC",
+      "name": "Demacia Cup",
+      "region_id": "CN",
+      "logo_url": "/assets/dc.png"
+    }
+  ],
+  "teams": [],
+  "players": [],
+  "rosters": [],
+  "seasons": [
+    {
+      "id": "lck-2026",
+      "league_id": "lck",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "lec-2026",
+      "league_id": "lec",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "lpl-2026",
+      "league_id": "lpl",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "msi-2026",
+      "league_id": "msi",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "ewc-2026",
+      "league_id": "ewc",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "worlds-2026",
+      "league_id": "worlds",
+      "year": 2026,
+      "name": "2026"
+    },
+    {
+      "id": "demacia-cup-2026",
+      "league_id": "demacia-cup",
+      "year": 2026,
+      "name": "2026"
+    }
+  ],
+  "phases": [],
+  "matches": []
+}
