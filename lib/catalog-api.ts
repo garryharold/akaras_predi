@@ -1,3 +1,4 @@
+import {openRosterStatements} from './match-rosters.ts';
 import { resolveViewer } from './identity.ts';
 import { z } from 'zod';
 import countryRows from '../db/reference-data.json' with { type: 'json' };
@@ -80,7 +81,7 @@ export async function handleCatalog(req:Request,env:Env,options:{devPreview?:boo
    const team=await db.prepare('SELECT id FROM teams WHERE id=? AND active=1').bind(b.team_id).first();
    const player=await db.prepare('SELECT id FROM players WHERE id=? AND active=1').bind(b.player_id).first();
    if(!team||!player)throw new Problem('Choose an active team and player.');
-   const newId=uid();await db.prepare('INSERT INTO roster_memberships (id,team_id,player_id,role_id,is_starter,started_at) VALUES (?,?,?,?,?,?)').bind(newId,b.team_id,b.player_id,b.role_id,b.is_starter,b.started_at).run();
+   const newId=uid();await db.batch([db.prepare('INSERT INTO roster_memberships (id,team_id,player_id,role_id,is_starter,started_at) VALUES (?,?,?,?,?,?)').bind(newId,b.team_id,b.player_id,b.role_id,b.is_starter,b.started_at),...openRosterStatements(db)]);
    return json({id:newId},201);
   }
   if(req.method==='PATCH'&&id){
@@ -89,7 +90,7 @@ export async function handleCatalog(req:Request,env:Env,options:{devPreview?:boo
    if(!r)throw new Problem('Roster entry not found.',404);
    if(r.ended_at)throw new Problem('This roster membership has already ended.',409);
    if(b.ended_at<r.started_at)throw new Problem('End date cannot precede the start date.');
-   await db.prepare('UPDATE roster_memberships SET ended_at=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(b.ended_at,id).run();return json({ok:true});
+   await db.batch([db.prepare('UPDATE roster_memberships SET ended_at=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(b.ended_at,id),...openRosterStatements(db)]);return json({ok:true});
   }
  }
  if(schemas[kind]&&['POST','PATCH'].includes(req.method)){
