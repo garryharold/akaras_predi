@@ -11,6 +11,12 @@ export async function migrate(pool){
   const previous=(await client.query('SELECT checksum FROM app_migrations WHERE name=$1',['001-initial'])).rows[0];
   if(previous&&previous.checksum!==checksum)throw Error('Schema checksum changed; an explicit migration is required.');
   if(!previous){await client.query(sql);await client.query('INSERT INTO app_migrations(name,checksum) VALUES ($1,$2)',['001-initial',checksum]);}
+  await client.query(`CREATE TABLE IF NOT EXISTS item_guessr_records (
+    difficulty text PRIMARY KEY CHECK (difficulty IN ('bronze','emerald','challenger')),
+    user_id text NOT NULL REFERENCES prediction_users(id) ON DELETE CASCADE,
+    score integer NOT NULL CHECK (score > 0 AND score % 100 = 0),
+    achieved_at timestamptz NOT NULL DEFAULT now()
+  )`);
   await client.query('COMMIT');
  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release();}
 }

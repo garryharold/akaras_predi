@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {handleArcadeRecords} from './arcade-records.mjs';
 import path from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
@@ -26,7 +27,7 @@ export function createServer(env,{publicUrl,secure=true}={}){
     for await(const chunk of req){size+=chunk.length;if(size>maxBody){res.writeHead(413,{'Content-Type':'application/json'});res.end('{"error":"Túl nagy kérés."}');return;}chunks.push(chunk);}
     if(chunks.length)body=Buffer.concat(chunks);
     const request=new Request(url,{method:req.method,headers,...(body?{body}:{})});
-    const handler=url.pathname.startsWith('/api/game/')?handleGame:url.pathname.startsWith('/api/auth/')?handleAuth:url.pathname.startsWith('/api/catalog/')?handleCatalog:null;
+    const handler=url.pathname.startsWith('/api/arcade/')?handleArcadeRecords:url.pathname.startsWith('/api/game/')?handleGame:url.pathname.startsWith('/api/auth/')?handleAuth:url.pathname.startsWith('/api/catalog/')?handleCatalog:null;
     response=handler?await handler(request,env):Response.json({error:'Nincs ilyen végpont.'},{status:404});
    }else if(req.method!=='GET'&&req.method!=='HEAD')response=new Response(null,{status:405});
    else if(url.pathname==='/')response=page();
