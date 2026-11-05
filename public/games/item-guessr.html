@@ -664,8 +664,6 @@ button, input {
 
 :root{--ink:#100e1b;--panel:#1b1729;--panel-2:#282136;--line:#453751;--gold:#b798fb;--gold-dim:#78579d;--gold-br:#f1e6ff;--text:#eee8f4;--text-dim:#b1a7bd;--font-display:Arial,sans-serif;--font-body:Arial,sans-serif}
 .app{min-height:0;padding:26px 18px 24px}.credit{color:var(--text-dim);font-size:12px;text-align:center;line-height:1.7}.credit a{color:#c6adff}.guess-input{min-width:0}.modal-backdrop{overflow:auto}.modal-card{max-height:95vh;overflow:auto}
-
-.diff-global{display:block;margin-top:12px;color:#c5a7ff;font-size:12px;line-height:1.8}.diff-global b{display:block;color:#eee8fa;overflow-wrap:anywhere}.shared-record-help{font-size:12px;line-height:1.7;color:var(--text-dim);text-align:center;margin:0}#retrySharedRecord{margin:auto;color:#d4bbff;background:#251e32;border:1px solid #5a4473;border-radius:7px;padding:10px}
 </style>
 </head>
 <body>
@@ -709,7 +707,6 @@ button, input {
         <span class="diff-coverage">50% kitakarva</span>
         <span class="diff-desc">Az ikon fele látszik.</span>
         <span class="diff-best">Saját rekord: <b data-best="bronze">0</b></span>
-        <span class="diff-global">Rekord<br><b data-shared-record="bronze">Betöltés…</b></span>
       </button>
 
       <button class="diff-card" data-difficulty="emerald">
@@ -717,7 +714,6 @@ button, input {
         <span class="diff-coverage">75% kitakarva</span>
         <span class="diff-desc">Az ikon negyedéből kell felismerned a tárgyat.</span>
         <span class="diff-best">Saját rekord: <b data-best="emerald">0</b></span>
-        <span class="diff-global">Rekord<br><b data-shared-record="emerald">Betöltés…</b></span>
       </button>
 
       <button class="diff-card" data-difficulty="challenger">
@@ -725,14 +721,12 @@ button, input {
         <span class="diff-coverage">90% kitakarva</span>
         <span class="diff-desc">Csupán az ikon tizede látható.</span>
         <span class="diff-best">Saját rekord: <b data-best="challenger">0</b></span>
-        <span class="diff-global">Rekord<br><b data-shared-record="challenger">Betöltés…</b></span>
       </button>
 
     </div>
   </section>
 
-  <p class="shared-record-help" id="sharedRecordStatus" role="status">Rekordok betöltése…</p><button id="retrySharedRecord" type="button" hidden>Rekordmentés újra</button>
-<!-- ============ GAME SCREEN ============ -->
+  <!-- ============ GAME SCREEN ============ -->
   <section class="screen game-screen" id="gameScreen" hidden>
 
     <div class="game-topline">
@@ -1098,7 +1092,7 @@ const HIGHSCORE_KEY = 'akaras.itemGuesser.highscores.v1';
 
 // Hidden cheat code. Typing this into the guess box and submitting
 // reveals the current item's name without ending the run or scoring.
-
+const SECRET_KEY = 'iddqd';
 
 /* ---------------- DOM refs ---------------- */
 const menuScreen   = document.getElementById('menuScreen');
@@ -1320,7 +1314,6 @@ function handleReveal() {
 }
 
 function endRun(forfeited) {
-  saveSharedRecord(state.difficulty, state.score);
   clearTimeout(transitionTimer); closeAutocomplete();
   const difficulty = state.difficulty;
   const isNewBest = state.score > (highscores[difficulty] ?? 0);
@@ -1475,6 +1468,10 @@ guessForm.addEventListener('submit', (e) => {
 
   closeAutocomplete();
 
+  if (normalized === SECRET_KEY) {
+    handleReveal();
+    return;
+  }
 
   const chosen = search.resolve(raw);
   if (!chosen) {
@@ -1512,62 +1509,6 @@ if (window.frameElement) {
   new ResizeObserver(resize).observe(document.querySelector('.app'));
   window.addEventListener('load',resize);
 }
-let sharedRecords = {};
-let recordsSignedIn = false;
-let pendingRecord = null;
-let savingRecord = false;
-
-function renderSharedRecords() {
-  document.querySelectorAll('[data-shared-record]').forEach(element => {
-    const record = sharedRecords[element.dataset.sharedRecord];
-    element.textContent = record ? record.score.toLocaleString('hu-HU') + ' pont · ' + record.player_name : 'Még nincs rekord';
-  });
-  const status = document.getElementById('sharedRecordStatus');
-  if (!pendingRecord) status.textContent = recordsSignedIn ? 'Közös rekordok az összes játékostól.' : 'A közös rekordhoz jelentkezz be az Akarás-fiókodba.';
-}
-async function recordRequest(body) {
-  const response = await fetch('/api/arcade/records', body ? {
-    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
-  } : {cache: 'no-store'});
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'A rekord nem elérhető.');
-  sharedRecords = Object.fromEntries(data.records.map(record => [record.difficulty, record]));
-  recordsSignedIn = data.signed_in;
-  return data;
-}
-async function loadSharedRecords() {
-  if (location.protocol === 'file:') {
-    document.getElementById('sharedRecordStatus').textContent = 'A közös rekordok az online oldalon jelennek meg.';
-    return;
-  }
-  try { await recordRequest(); renderSharedRecords(); }
-  catch { document.getElementById('sharedRecordStatus').textContent = 'A közös rekordok most nem érhetők el.'; }
-}
-async function saveSharedRecord(difficulty, score) {
-  if (!recordsSignedIn || score <= 0 || (sharedRecords[difficulty]?.score || 0) >= score) return;
-  pendingRecord = {difficulty, score};
-  if (savingRecord) return;
-  savingRecord = true;
-  try {
-    while (pendingRecord) {
-      const candidate = pendingRecord;
-      document.getElementById('sharedRecordStatus').textContent = 'Rekord mentése…';
-      await recordRequest(candidate);
-      if (pendingRecord === candidate) pendingRecord = null;
-      renderSharedRecords();
-    }
-    document.getElementById('retrySharedRecord').hidden = true;
-  } catch {
-    document.getElementById('sharedRecordStatus').textContent = 'A rekord mentése megszakadt.';
-    document.getElementById('retrySharedRecord').hidden = false;
-  } finally { savingRecord = false; }
-}
-document.getElementById('retrySharedRecord').addEventListener('click', () => {
-  if (pendingRecord) saveSharedRecord(pendingRecord.difficulty, pendingRecord.score);
-});
-loadSharedRecords();
-setInterval(() => { if (!document.hidden && !savingRecord && !pendingRecord) loadSharedRecords(); }, 30000);
-
 </script>
 </body>
 </html>

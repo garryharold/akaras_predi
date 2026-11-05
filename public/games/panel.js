@@ -16,7 +16,7 @@ function renderAkarasGames(route) {
   async function load() {
     status.textContent='Itemek betöltése…';
     try {
-      const response = await fetch('/games/item-guessr.html?v=e3773a6ee79c');
+      const response = await fetch('/games/item-guessr.html?v=41df62be24b4');
       if (!response.ok) throw Error('load');
       const html = await response.text();
       if (!frame.isConnected) return;
