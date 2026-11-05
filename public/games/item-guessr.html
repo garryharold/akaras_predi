@@ -313,8 +313,8 @@ button, input {
 
 .item-frame-inner {
   position: relative;
-  width: min(74vw, 360px);
-  height: min(74vw, 360px);
+  width: min(70vw, 256px);
+  height: min(70vw, 256px);
   border-radius: 12px;
   overflow: hidden;
   background: #000;
@@ -1195,7 +1195,57 @@ function itemImageUrl(item) {
 }
 
 /* ---------------- Canvas rendering ---------------- */
+// Two-pass Lanczos interpolation keeps the painted contours clear at game size.
+function drawItemAtDisplaySize(image, size) {
+  const sw = image.naturalWidth, sh = image.naturalHeight;
+  const source = document.createElement('canvas');
+  source.width = sw;
+  source.height = sh;
+  const reader = source.getContext('2d');
+  reader.fillStyle = '#000';
+  reader.fillRect(0, 0, sw, sh);
+  reader.drawImage(image, 0, 0);
+  const pixels = reader.getImageData(0, 0, sw, sh).data;
+  const horizontal = new Float32Array(size * sh * 3);
+  const kernel = x => Math.abs(x) < 1e-7 ? 1 : Math.abs(x) >= 2 ? 0 :
+    Math.sin(Math.PI*x) * Math.sin(Math.PI*x/2) / (Math.PI*Math.PI*x*x/2);
+  function coefficients(input) {
+    return Array.from({length:size}, (_,i) => {
+      const x = (i + 0.5) * input / size - 0.5;
+      const first = Math.floor(x) - 1;
+      const taps = Array.from({length:4}, (_,k) => [Math.min(input-1,Math.max(0,first+k)),kernel(x-first-k)]);
+      const sum = taps.reduce((n,t) => n+t[1],0);
+      for (const t of taps) t[1] /= sum;
+      return taps;
+    });
+  }
+  const xs = coefficients(sw), ys = coefficients(sh);
+  for (let y=0;y<sh;y++) for (let x=0;x<size;x++) {
+    const to = (y*size+x)*3;
+    for (const [sx,weight] of xs[x]) {
+      const from = (y*sw+sx)*4;
+      for (let c=0;c<3;c++) horizontal[to+c] += pixels[from+c]*weight;
+    }
+  }
+  const output = ctx.createImageData(size,size);
+  for (let y=0;y<size;y++) for (let x=0;x<size;x++) {
+    let r=0,g=0,b=0;
+    for (const [sy,weight] of ys[y]) {
+      const from = (sy*size+x)*3;
+      r += horizontal[from]*weight;
+      g += horizontal[from+1]*weight;
+      b += horizontal[from+2]*weight;
+    }
+    const to=(y*size+x)*4;
+    output.data[to]=r;output.data[to+1]=g;output.data[to+2]=b;output.data[to+3]=255;
+  }
+  ctx.putImageData(output,0,0);
+}
+
 function drawObscuredItem(item, coverage) {
+  const displayWidth = itemCanvas.getBoundingClientRect().width || 256;
+  const resolution = Math.max(1, Math.min(512, Math.round(displayWidth * (window.devicePixelRatio || 1))));
+  itemCanvas.width = itemCanvas.height = resolution;
   const size = itemCanvas.width;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
@@ -1207,7 +1257,7 @@ function drawObscuredItem(item, coverage) {
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, size, size);
-    ctx.drawImage(img, 0, 0, size, size);
+    drawItemAtDisplaySize(img, size);
     applyMask(coverage, size);
   };
   img.onerror = () => {
