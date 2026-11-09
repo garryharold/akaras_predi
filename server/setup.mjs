@@ -17,6 +17,9 @@ export async function migrate(pool){
     score integer NOT NULL CHECK (score > 0 AND score % 100 = 0),
     achieved_at timestamptz NOT NULL DEFAULT now()
   )`);
+  await client.query(`CREATE TABLE IF NOT EXISTS discord_match_reminders (
+    match_id text PRIMARY KEY REFERENCES matches(id) ON DELETE CASCADE
+  )`);
   await client.query('COMMIT');
  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release();}
 }

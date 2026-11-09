@@ -14,7 +14,11 @@ try{
  await migrate(pool);
  const DB=new PostgresDatabase(pool),BUCKET=new SupabaseStorage(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,process.env.SUPABASE_BUCKET||'akaras-images');
  await BUCKET.ensureBucket();await bootstrapAdmin(DB,process.env.ADMIN_EMAIL,process.env.ADMIN_PASSWORD);
- const server=createServer({DB,BUCKET},{publicUrl:process.env.APP_URL||process.env.RENDER_EXTERNAL_URL});
+ const server=createServer({DB,BUCKET,
+  DISCORD_WEBHOOK_URL:process.env.DISCORD_WEBHOOK_URL,
+  DISCORD_REMINDER_KEY:process.env.DISCORD_REMINDER_KEY,
+  DISCORD_REMINDER_MINUTES:process.env.DISCORD_REMINDER_MINUTES
+ },{publicUrl:process.env.APP_URL||process.env.RENDER_EXTERNAL_URL});
  server.listen(Number(process.env.PORT)||10000,'0.0.0.0',()=>console.log('Akarás Predictions ready.'));
  async function stop(){server.close(async()=>{await pool.end();process.exit(0)});setTimeout(()=>process.exit(1),10000).unref();}
  process.on('SIGTERM',stop);process.on('SIGINT',stop);
