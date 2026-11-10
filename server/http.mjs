@@ -31,7 +31,7 @@ export function createServer(env,{publicUrl,secure=true}={}){
     const handler=url.pathname==='/api/reminders/discord'?handleDiscordReminders:url.pathname.startsWith('/api/arcade/')?handleArcadeRecords:url.pathname.startsWith('/api/game/')?handleGame:url.pathname.startsWith('/api/auth/')?handleAuth:url.pathname.startsWith('/api/catalog/')?handleCatalog:null;
     response=handler?await handler(request,env):Response.json({error:'Nincs ilyen végpont.'},{status:404});
     const createsMatch = /^\/api\/game\/(?:match\/?$|bracket-activate\/[^/]+\/?$)/.test(url.pathname);
-    const importsMatches = /^\/api\/game\/import\/?$/.test(url.pathname);
+    const importsMatches = /^\/api\/game\/(?:import|bulk-matches)\/?$/.test(url.pathname);
     if (env.DISCORD_WEBHOOK_URL && response.ok && ['POST','PATCH'].includes(req.method) && (createsMatch || importsMatches)) {
      const result = await response.clone().json();
      if ((createsMatch && result.id) || (importsMatches && result.applied)) {

@@ -1,3 +1,4 @@
+import {parseBulkMatches} from './bulk-matches.ts';
 import {openRosterStatements,syncOpenMatchRosters} from './match-rosters.ts';
 import {ensureProfile,DEFAULT_AVATAR} from './profile-store.ts';
 import {saveProfile,readProfileImage} from './user-profile.ts';
@@ -74,6 +75,36 @@ export async function handleGame(req:Request,env:Env,options:{devPreview?:boolea
  const b=z.object({node_id:id,start_at:when,revision:z.number().int()}).parse(await body(req));const plan=await db.prepare('SELECT * FROM bracket_plans WHERE phase_id=?').bind(key).first<Row>();if(!plan||plan.revision!==b.revision)throw new Problem('Frissítsd az ágrajzot.',409);const nodes=JSON.parse(plan.nodes_json);const n=nodes.find((n:Row)=>n.id===b.node_id);if(!n||n.match_id)throw new Problem('A meccshely már kapcsolva van vagy nem létezik.',409);
  const resolved=validateBracket(nodes,key,await all(db,'matches'),await all(db,'phase_teams')).get(n.id)!;if(!resolved.a||!resolved.b)throw new Problem('Előbb legyen ismert mindkét továbbjutó csapat.');const matchId=uid();n.match_id=matchId;
  const ss=[db.prepare("INSERT INTO matches (id,phase_id,team_a_id,team_b_id,best_of,start_at,prediction_lock_at,round_name,round_order,bracket_side) SELECT ?,?,?,?,?,?,?,?,?,? WHERE EXISTS (SELECT 1 FROM bracket_plans WHERE phase_id=? AND revision=?)").bind(matchId,key,resolved.a,resolved.b,n.best_of,b.start_at,b.start_at,n.round_name,n.round_order,n.bracket_side,key,b.revision),...await rosterStatements(db,matchId,resolved.a,resolved.b,b.start_at),db.prepare('UPDATE bracket_plans SET nodes_json=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE phase_id=? AND revision=?').bind(JSON.stringify(nodes),key,b.revision)];const result=await db.batch(ss);if(!result[0].meta.changes)throw new Problem('Az ágrajz közben változott. Frissítsd az oldalt.',409);return reply({id:matchId});
+ }
+ if(kind==='bulk-matches'&&req.method==='POST'&&!key){
+  const input=z.object({source:z.string().max(20000),phase_id:id,apply:z.boolean().default(false)}).parse(await body(req,24000));
+  const tables=['leagues','seasons','phases','phase_teams','teams','matches'];
+  const catalog=Object.fromEntries(await Promise.all(tables.map(async table=>[table,await all(db,table)] as const)));
+  const {rows,errors}=parseBulkMatches(input.source,input.phase_id,catalog);
+  if(!input.apply||errors.length)return reply({rows,errors,applied:false});
+  const statements:D1PreparedStatement[]=[];
+  for(const row of rows){
+   const m=matchSchema.parse(row),matchId=uid();
+   await validateMatch(db,m);
+   statements.push(db.prepare('INSERT INTO matches (id,phase_id,group_id,team_a_id,team_b_id,best_of,start_at,prediction_lock_at) VALUES (?,?,?,?,?,?,?,?)')
+    .bind(matchId,m.phase_id,m.group_id,m.team_a_id,m.team_b_id,m.best_of,m.start_at,m.start_at),
+    ...await rosterStatements(db,matchId,m.team_a_id,m.team_b_id,m.start_at));
+  }
+  await db.batch(statements);
+  return reply({rows,errors:[],applied:true});
+ }
+ if(kind==='match'&&req.method==='DELETE'&&key){
+  const removed=await db.prepare(`
+    WITH removed AS (
+      DELETE FROM matches m WHERE m.id=? AND m.status IN ('scheduled','cancelled')
+        AND NOT EXISTS (SELECT 1 FROM predictions p WHERE p.match_id=m.id)
+        AND NOT EXISTS (SELECT 1 FROM bracket_plans b WHERE b.phase_id=m.phase_id AND b.nodes_json LIKE '%' || m.id || '%')
+      RETURNING m.id
+    ), roster AS (DELETE FROM match_players WHERE match_id IN (SELECT id FROM removed))
+    SELECT id FROM removed
+  `).bind(key).first();
+  if(!removed)throw new Problem('Csak kiírt vagy törölt státuszú, tipp nélküli és ágrajzhoz nem kapcsolt meccs távolítható el.',409);
+  return reply({ok:true});
  }
  if(kind==='match'&&['POST','PATCH'].includes(req.method)){
  const b=matchSchema.parse(await body(req));await validateMatch(db,b);if(key){const previous=await db.prepare('SELECT * FROM matches WHERE id=?').bind(key).first<Row>();if(previous){if(previous.phase_id!==b.phase_id&&await db.prepare('SELECT phase_id FROM bracket_plans WHERE phase_id=? AND nodes_json LIKE ?').bind(previous.phase_id,'%'+key+'%').first())throw new Problem('Kapcsolt ágrajzmeccs nem helyezhető át másik fázisba.');await checkLinkedPlans(db,{...previous,...b});}}const matchId=key||uid();let lock=b.start_at;const statements:D1PreparedStatement[]=[];if(key){const old=await db.prepare('SELECT * FROM matches WHERE id=?').bind(key).first<Row>();if(!old)throw new Problem('Nincs ilyen meccs.',404);const existing=await db.prepare('SELECT id FROM predictions WHERE match_id=? LIMIT 1').bind(key).first();if(existing&&['phase_id','group_id','team_a_id','team_b_id','best_of'].some(k=>old[k]!==(b as Row)[k]))throw new Problem('Tippelt meccsnél a párosítás, Best Of és fázis már nem változtatható.',409);if(old.status==='completed'&&old.best_of!==b.best_of)throw new Problem('Lezárt meccs Best Of-ja nem változtatható.');if(old.prediction_lock_at<=now)lock=old.prediction_lock_at;statements.push(db.prepare('UPDATE matches SET phase_id=?,group_id=?,team_a_id=?,team_b_id=?,best_of=?,start_at=?,prediction_lock_at=?,round_name=?,round_order=?,bracket_side=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(b.phase_id,b.group_id,b.team_a_id,b.team_b_id,b.best_of,b.start_at,lock,b.round_name,b.round_order,b.bracket_side,key));if(!existing){statements.push(db.prepare('DELETE FROM match_players WHERE match_id=?').bind(key));statements.push(...await rosterStatements(db,matchId,b.team_a_id,b.team_b_id,b.start_at));}}
