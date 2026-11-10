@@ -1,5 +1,5 @@
 import http from 'node:http';
-import {handleDiscordReminders} from './discord-reminders.mjs';
+import {handleDiscordReminders,sendDiscordMatchNotices} from './discord-reminders.mjs';
 import {handleArcadeRecords} from './arcade-records.mjs';
 import path from 'node:path';
 import {readFile} from 'node:fs/promises';
@@ -30,6 +30,18 @@ export function createServer(env,{publicUrl,secure=true}={}){
     const request=new Request(url,{method:req.method,headers,...(body?{body}:{})});
     const handler=url.pathname==='/api/reminders/discord'?handleDiscordReminders:url.pathname.startsWith('/api/arcade/')?handleArcadeRecords:url.pathname.startsWith('/api/game/')?handleGame:url.pathname.startsWith('/api/auth/')?handleAuth:url.pathname.startsWith('/api/catalog/')?handleCatalog:null;
     response=handler?await handler(request,env):Response.json({error:'Nincs ilyen végpont.'},{status:404});
+    const createsMatch = /^\/api\/game\/(?:match\/?$|bracket-activate\/[^/]+\/?$)/.test(url.pathname);
+    const importsMatches = /^\/api\/game\/import\/?$/.test(url.pathname);
+    if (env.DISCORD_WEBHOOK_URL && response.ok && ['POST','PATCH'].includes(req.method) && (createsMatch || importsMatches)) {
+     const result = await response.clone().json();
+     if ((createsMatch && result.id) || (importsMatches && result.applied)) {
+      // The database commit succeeded. A webhook failure must not fail the save.
+      void sendDiscordMatchNotices(env,url,{announcementOnly:true,matchId:result.id || null})
+       .then(notice=>{if(!notice.ok)console.error('Discord match announcement:',notice.status);})
+       .catch(error=>console.error('Discord match announcement:',error.code || error.name));
+     }
+    }
+
    }else if(req.method!=='GET'&&req.method!=='HEAD')response=new Response(null,{status:405});
    else if(url.pathname==='/')response=page();
    else{

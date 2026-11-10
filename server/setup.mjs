@@ -20,6 +20,20 @@ export async function migrate(pool){
   await client.query(`CREATE TABLE IF NOT EXISTS discord_match_reminders (
     match_id text PRIMARY KEY REFERENCES matches(id) ON DELETE CASCADE
   )`);
+  await client.query(`DO $migration$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='akaras' AND table_name='discord_match_reminders' AND column_name='lead_minutes'
+    ) THEN
+      ALTER TABLE discord_match_reminders ADD COLUMN lead_minutes integer NOT NULL DEFAULT 30;
+      ALTER TABLE discord_match_reminders DROP CONSTRAINT discord_match_reminders_pkey;
+      ALTER TABLE discord_match_reminders ADD PRIMARY KEY (match_id,lead_minutes);
+    END IF;
+  END $migration$`);
+  await client.query(`INSERT INTO app_migrations(name,checksum)
+    VALUES ('discord-announcement-start', to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))
+    ON CONFLICT (name) DO NOTHING`);
   await client.query('COMMIT');
  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release();}
 }
