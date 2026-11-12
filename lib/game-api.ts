@@ -8,7 +8,7 @@ import { validSeries,pointsFor,standingsFor } from './game-engine.ts';
 import { handleCatalog } from './catalog-api.ts';
 import { validateBracket,resolveBracket } from './bracket.ts';
 import { prepareImport } from './game-import.ts';
-type Row=Record<string,any>;type Env={DB?:D1Database;BUCKET?:R2Bucket};
+type Row=Record<string,any>;type Env={DB?:D1Database;BUCKET?:R2Bucket;ADMIN_EMAIL?:string};
 const id=z.string().trim().min(1).max(100),text=z.string().trim().min(1).max(120),nullable=id.nullish().transform(v=>v||null);
 const when=z.string().datetime({offset:true}).transform(v=>new Date(v).toISOString());
 const phaseType=z.enum(['standings','groups','single_elimination','double_elimination','playoffs']);
@@ -30,12 +30,38 @@ export async function rosterStatements(db:D1Database,matchId:string,a:string,b:s
 async function validateMatch(db:D1Database,m:Row){if(m.team_a_id===m.team_b_id)throw new Problem('Két különböző csapatot válassz.');const p=await db.prepare('SELECT * FROM phases WHERE id=?').bind(m.phase_id).first<Row>();if(!p)throw new Problem('A fázis nem létezik.');const entries=await db.prepare('SELECT * FROM phase_teams WHERE phase_id=? AND team_id IN (?,?)').bind(m.phase_id,m.team_a_id,m.team_b_id).all<Row>();if(entries.results.length!==2)throw new Problem('Mindkét csapatot add hozzá a fázis résztvevőihez.');if(p.type==='groups'&&(!m.group_id||entries.results.some(e=>e.group_id!==m.group_id)))throw new Problem('A meccs két csapata ugyanahhoz a csoporthoz tartozzon.');if(p.type!=='groups'&&m.group_id)throw new Problem('Ehhez a fázishoz nincs csoport.');}
 export async function handleGame(req:Request,env:Env,options:{devPreview?:boolean}={}):Promise<Response>{try{
  if(!env.DB)return reply({error:'Az adatbázis nem elérhető.'},503);const db=env.DB,url=new URL(req.url),[kind,key]=url.pathname.replace(/^\/api\/game\/?/,'').split('/'),viewer=await resolveViewer(req,db,options.devPreview);const now=new Date().toISOString();if(req.method!=='GET')origin(req);
+ const ownerEmail=env.ADMIN_EMAIL?.trim().toLowerCase();
+ const owner=!!(ownerEmail && viewer?.admin && viewer.auth_kind==='password' &&
+   !viewer.preview && viewer.email?.toLowerCase()===ownerEmail);
+ if(kind==='admin-roles'){
+  if(!owner)throw new Problem('Az adminjogokat csak a tulajdonos kezelheti.',403);
+  if(req.method==='GET'&&!key){
+   const accounts=await db.prepare(`
+    SELECT a.user_id AS id,a.email,a.is_admin,u.display_name
+    FROM auth_accounts a JOIN prediction_users u ON u.id=a.user_id
+    ORDER BY u.display_name,a.email
+   `).all<Row>();
+   return reply({accounts:accounts.results.map(account=>({
+    id:account.id,email:account.email,name:account.display_name,
+    admin:account.is_admin===1,owner:account.email.toLowerCase()===ownerEmail
+   }))});
+  }
+  if(req.method==='PATCH'&&key){
+   const {admin:grant}=z.object({admin:z.boolean()}).strict().parse(await body(req,1024));
+   const target=await db.prepare('SELECT email FROM auth_accounts WHERE user_id=?').bind(key).first<{email:string}>();
+   if(!target)throw new Problem('Nincs ilyen regisztrált fiók.',404);
+   if(key===viewer!.id||target.email.toLowerCase()===ownerEmail)throw new Problem('A tulajdonos jogosultsága itt nem módosítható.',409);
+   await db.prepare('UPDATE auth_accounts SET is_admin=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=?').bind(grant?1:0,key).run();
+   return reply({ok:true});
+  }
+  return reply({error:'Nincs ilyen művelet.'},405);
+ }
  if(kind==='bootstrap'&&req.method==='GET'){
  await syncOpenMatchRosters(db);const d=await data(db);if(viewer){const profile=await ensureProfile(db,viewer.id);viewer.name=profile.display_name;viewer.avatar_url=profile.avatar_url||DEFAULT_AVATAR;}const own=viewer?(await db.prepare('SELECT * FROM predictions WHERE user_id=?').bind(viewer.id).all<Row>()).results:[];
  const rankings=await db.prepare("SELECT p.*,u.display_name FROM predictions p JOIN prediction_users u ON u.id=p.user_id JOIN matches m ON m.id=p.match_id WHERE m.status='completed' LIMIT 100001").all<Row>();if(rankings.results.length>100000)throw new Problem('A ranglista lapozást igényel.',409);
  const profiles=await all(db,'prediction_users');const board=new Map<string,Row>(profiles.map(p=>[p.id,{user_id:p.id,name:p.display_name,avatar_url:p.avatar_url||DEFAULT_AVATAR,points:0,completed:0,exact:0}]));for(const p of rankings.results){const m=d.matches.find(m=>m.id===p.match_id);if(!m)continue;const item=board.get(p.user_id)||{user_id:p.user_id,name:p.display_name,avatar_url:p.avatar_url||DEFAULT_AVATAR,points:0,completed:0,exact:0};const score=pointsFor(p,m);item.points+=score.total;item.completed++;item.exact+=score.series===50?1:0;board.set(p.user_id,item);}
  const visible=viewer?.admin?d:{...d,players:d.players.map(p=>({id:p.id,ign:p.ign,photo_url:p.photo_url,role_id:p.role_id,active:p.active})),roster_memberships:d.roster_memberships.map(({source_label,...m})=>m)};
- return reply({...visible,viewer,server_time:now,predictions:own.map(p=>({...p,points:pointsFor(p,d.matches.find(m=>m.id===p.match_id)||{})})),leaderboard:[...board.values()].sort((a,b)=>b.points-a.points||b.exact-a.exact||a.name.localeCompare(b.name)),standings:Object.fromEntries(d.phases.map(p=>[p.id,standingsFor(p,d.matches,d.phase_teams,d.teams)]))});
+ return reply({...visible,viewer:viewer?{...viewer,owner}:null,server_time:now,predictions:own.map(p=>({...p,points:pointsFor(p,d.matches.find(m=>m.id===p.match_id)||{})})),leaderboard:[...board.values()].sort((a,b)=>b.points-a.points||b.exact-a.exact||a.name.localeCompare(b.name)),standings:Object.fromEntries(d.phases.map(p=>[p.id,standingsFor(p,d.matches,d.phase_teams,d.teams)]))});
  }
  if(kind==='prediction'&&req.method==='POST'){
  if(!viewer)throw new Problem('A tippeléshez jelentkezz be.',401);const p=z.object({match_id:id,score_a:z.number().int().min(0).max(5),score_b:z.number().int().min(0).max(5),mvp_player_id:nullable}).parse(await body(req));const m=await db.prepare('SELECT * FROM matches WHERE id=?').bind(p.match_id).first<Row>();if(!m)throw new Problem('Nincs ilyen meccs.',404);if(!validSeries(p.score_a,p.score_b,m.best_of))throw new Problem('Az eredmény nem érvényes ehhez a Best Of-hoz.');if(m.status!=='scheduled'||m.prediction_lock_at<=now)throw new Problem('Erre a meccsre már lezárt a tippelés.',409);

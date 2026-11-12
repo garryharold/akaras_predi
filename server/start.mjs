@@ -15,6 +15,7 @@ try{
  const DB=new PostgresDatabase(pool),BUCKET=new SupabaseStorage(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,process.env.SUPABASE_BUCKET||'akaras-images');
  await BUCKET.ensureBucket();await bootstrapAdmin(DB,process.env.ADMIN_EMAIL,process.env.ADMIN_PASSWORD);
  const server=createServer({DB,BUCKET,
+  ADMIN_EMAIL:process.env.ADMIN_EMAIL,
   DISCORD_WEBHOOK_URL:process.env.DISCORD_WEBHOOK_URL,
   DISCORD_REMINDER_KEY:process.env.DISCORD_REMINDER_KEY
  },{publicUrl:process.env.APP_URL||process.env.RENDER_EXTERNAL_URL});

@@ -74,7 +74,35 @@ function leaderboard(){
 }
 
 function adminFilters(){const leagues=Hub.leagues.filter(l=>['LCK','LEC','LPL','MSI','EWC','WORLDS','DC'].includes(l.short_name));if(!leagues.some(l=>l.id===adminLeague))adminLeague=leagues[0]?.id||'';const ss=Hub.seasons.filter(s=>s.league_id===adminLeague).sort((a,b)=>b.year-a.year);if(!ss.some(s=>s.id===adminSeason))adminSeason=ss[0]?.id||'';const pp=Hub.phases.filter(p=>p.season_id===adminSeason).sort((a,b)=>a.sort_order-b.sort_order);if(!pp.some(p=>p.id===adminPhase))adminPhase=pp[0]?.id||'';return `<div class="panel adminfilters"><label>Liga<select onchange="adminLeague=this.value;adminSeason='';adminPhase='';adminPage()">${options(leagues.map(l=>[l.id,l.name]),adminLeague)}</select></label><label>Év<select onchange="adminSeason=this.value;adminPhase='';adminPage()">${options(ss.map(s=>[s.id,s.name]),adminSeason)}</select></label><label>Fázis<select onchange="adminPhase=this.value;adminPage()">${options(pp.map(p=>[p.id,p.name]),adminPhase)}</select></label></div>`}
-function adminPage(){if(!Hub.viewer?.admin){$('#app').innerHTML=empty('Adminfelület','Ehhez a felülethez adminjog szükséges.');return}const filters=adminFilters();$('#app').innerHTML=`<div class="pagehead"><div><div class="eyebrow">VERSENYSZERVEZÉS</div><h1>Admin panel</h1></div><a href="#database" class="button small">Csapatok és rosterek ↗</a></div><div class="tabs">${[['matches','Meccsek és eredmények'],['bracket','Versenyág szerkesztő'],['phases','Fázisok'],['seasons','Évek'],['import','JSON-import']].map(([k,n])=>`<button class="${adminView===k?'active':''}" onclick="adminView='${k}';adminPage()">${n}</button>`).join('')}</div>${adminView==='import'?'':filters}<div id="admin-content"></div>`;if(adminView==='import')importPage();else if(adminView==='seasons')adminSeasons();else if(adminView==='phases')adminPhases();else if(adminView==='bracket')adminBrackets();else adminMatches()}
+function adminPage(){if(!Hub.viewer?.admin){$('#app').innerHTML=empty('Adminfelület','Ehhez a felülethez adminjog szükséges.');return}if(adminView==='roles'&&!Hub.viewer.owner)adminView='matches';const filters=['import','roles'].includes(adminView)?'':adminFilters();$('#app').innerHTML=`<div class="pagehead"><div><div class="eyebrow">VERSENYSZERVEZÉS</div><h1>Admin panel</h1></div><a href="#database" class="button small">Csapatok és rosterek ↗</a></div><div class="tabs">${[['matches','Meccsek és eredmények'],['bracket','Versenyág szerkesztő'],['phases','Fázisok'],['seasons','Évek'],['import','JSON-import'],...(Hub.viewer.owner?[['roles','Adminjogok']]:[])].map(([k,n])=>`<button class="${adminView===k?'active':''}" onclick="adminView='${k}';adminPage()">${n}</button>`).join('')}</div>${filters}<div id="admin-content"></div>`;if(adminView==='roles')adminRolePage();else if(adminView==='import')importPage();else if(adminView==='seasons')adminSeasons();else if(adminView==='phases')adminPhases();else if(adminView==='bracket')adminBrackets();else adminMatches()}
+async function adminRolePage(){
+ const panel=$('#admin-content');
+ panel.innerHTML='<div class="panel"><h2>Adminjogok</h2><p class="help">Az adminok hozzáférnek a teljes adminfelülethez. A jogosultságokat a tulajdonos kezeli.</p><p role="status">Regisztrált fiókok betöltése…</p></div>';
+ try{
+  const {accounts}=await gameApi('admin-roles');
+  if(!panel.isConnected)return;
+  panel.querySelector('[role=status]').outerHTML=`<div class="matchlist">${accounts.map(account=>`
+    <div class="adminrow"><div class="info"><strong>${esc(account.name)} <span class="badge">${account.owner?'Tulajdonos':account.admin?'Admin':'Tag'}</span></strong><small>${esc(account.email)}</small></div>
+    ${account.owner?'':`<button type="button" class="small ${account.admin?'':'primary'}" data-account-id="${esc(account.id)}" data-grant="${!account.admin}">${account.admin?'Adminjog visszavonása':'Adminjog adása'}</button>`}</div>`).join('')}</div>`;
+  panel.querySelectorAll('[data-account-id]').forEach(button=>{
+   button.addEventListener('click',()=>{
+    const account=accounts.find(row=>row.id===button.dataset.accountId);
+    const grant=button.dataset.grant==='true';
+    modal(`<h2>${grant?'Adminjog adása':'Adminjog visszavonása'}</h2>
+     <p><strong>${esc(account.name)}</strong> · ${esc(account.email)}</p>
+     <p class="help">${grant?'Ez a fiók hozzáférést kap az adminfelülethez és az adminműveletekhez.':'Ez a fiók ismét tagként használhatja az oldalt.'}</p>
+     <form><p class="formerror" role="alert"></p><button type="button" onclick="closeModal()">Mégse</button> <button type="submit" class="primary">Megerősítés</button></form>`);
+    const form=$('#modal form');
+    form.addEventListener('submit',event=>{
+     event.preventDefault();
+     submitForm(form,()=>gameApi('admin-roles/'+encodeURIComponent(account.id),{admin:grant},'PATCH'),grant?'Adminjog megadva':'Adminjog visszavonva');
+    });
+   });
+  });
+ }catch(error){
+  if(panel.isConnected)panel.querySelector('[role=status]').textContent=error.message;
+ }
+}
 function adminSeasons(){$('#admin-content').innerHTML=`<div class="pagehead"><h2>Évek · ${esc(find('leagues',adminLeague)?.name||'')}</h2><button class="primary" onclick="seasonModal()">＋ Új év</button></div><div class="catalog-cards">${Hub.seasons.filter(s=>s.league_id===adminLeague).map(s=>`<div class="panel"><div class="eyebrow">${s.year}</div><h2>${esc(s.name)}</h2><p class="muted">${Hub.phases.filter(p=>p.season_id===s.id).length} fázis</p><button onclick="seasonModal('${s.id}')">Szerkesztés</button></div>`).join('')}</div>`}
 function seasonModal(id){if(!adminOnly())return;const s=find('seasons',id);modal(`<h2>${s?'Év szerkesztése':'Új év'}</h2><form onsubmit="event.preventDefault();saveSeason(this,'${id||''}')"><div class="fieldgrid">${field('year','Év',`<input type="number" name="year" min="2010" max="2100" required value="${s?.year||new Date().getFullYear()}">`)}${field('name','Megjelenő név',`<input name="name" required value="${esc(s?.name||String(new Date().getFullYear()))}">`)}</div><p class="formerror" id="form-error"></p><button class="primary" type="submit">Mentés</button></form>`)}
 async function saveSeason(f,id){await submitForm(f,()=>gameApi('season'+(id?'/'+id:''),{league_id:find('seasons',id)?.league_id||adminLeague,year:Number(f.year.value),name:f.elements.name.value},id?'PATCH':'POST'),'Év mentve')}
